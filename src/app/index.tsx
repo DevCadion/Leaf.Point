@@ -47,10 +47,8 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 24 }}>
+      <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 18 }}>
         Test Leaf </Text>
     </View>
   );
 }
-
-

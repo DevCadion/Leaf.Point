@@ -1,5 +1,5 @@
 export const themas = {
     fonts:{
-        primeira:"#00734F"
+        logocolor:"#00734F"
     }
 }

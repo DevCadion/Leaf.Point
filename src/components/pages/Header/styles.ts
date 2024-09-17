@@ -1,16 +1,6 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 
-const Page: React.FC = () => {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.text}>Leaf Point</Text>
-            <Text style={styles.subText}>Entrar...</Text>
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
     container: {
         position: 'absolute',
         top: 50,  // Ajuste a altura a partir do topo
@@ -31,5 +21,3 @@ const styles = StyleSheet.create({
         marginLeft:-50, // Adiciona uma margem de 50 pixels à esquerda
     },
 });
-
-export default Page;

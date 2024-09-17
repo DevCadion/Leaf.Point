@@ -1,0 +1,1 @@
+configurações padroes para decorrencia do projeto.

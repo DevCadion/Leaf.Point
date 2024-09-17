@@ -1,14 +1,10 @@
 import React from "react";
-import Page from "../components/Header/MarcaHader"
-import {Text, TextInput, View} from 'react-native';
-//import login from "../components/logins/login";
+//import Page from "../components/pages/Header/Page"
+import { View, Text, StyleSheet } from "react-native";
+import Page from "../components/pages/Header/fist";
 
-
-const MyComponent: React.FC = () => (
-    <>
-        <Page />
-        <Page />
-    </>
-);
-
-export default MyComponent;
+export default function index() {
+    return (
+        <Page/>
+    );
+  };

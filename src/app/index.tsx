@@ -9,7 +9,7 @@ import Routes from "../routes/index"
 
 export default function index() {
     return (
-        <Routes/>               
+       <Routes/>               
     );
   };
 

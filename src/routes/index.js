@@ -1,5 +1,5 @@
 
-import Welcome from "../components/pages/welcome/index";
+import Welcome from "../components/pages/welcome/index"
 import Login from "../components/pages/logins/login";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 

@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { styles } from './index';
+import { styles } from './styles';
 import { View, Text, Image, TouchableOpacity } from 'react-native'
 //import { styles } from '../Header/styles';
 
@@ -23,7 +23,7 @@ return (
  
            <Image style={styles.containerCentro}
            source={require('../../../assets/logo_centro.png')}
-           style={styles.imagem2}
+        //    style={styles.imagem2}
            resizeMode='contain'
            />
             

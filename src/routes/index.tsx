@@ -1,5 +1,5 @@
 
-import Welcome from "../components/pages/welcome/index"
+import WelcSome from "../components/pages/welcome/index"
 import Login from "../components/pages/logins/login";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -11,7 +11,7 @@ export default function Routes(){
         <Stack.Navigator>
             <Stack.Screen
             name="Welcome"
-            component={Welcome}
+            component={WelcSome}
             options={{ headerShown: false}}
             />
             

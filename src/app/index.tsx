@@ -2,6 +2,7 @@ import React from "react";
 
 import { View, Text, StyleSheet } from "react-native";
 import Page from "../components/pages/Header/fist";
+//import WelcSome from "../routes/view/index"
 
 
 import Routes from "../routes/index"
@@ -9,7 +10,8 @@ import Routes from "../routes/index"
 
 export default function index() {
     return (
-       <Routes/>               
+       <Routes/> 
+
     );
   };
 

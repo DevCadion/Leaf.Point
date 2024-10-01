@@ -1,1 +1,1 @@
-configurações padroes para decorrencia do projeto.
+npm install firebase

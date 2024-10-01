@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import styles from './styles';
+import { modalStyles } from './modalStyles';
 
 export default function PontoScreen() {
   const [currentDate, setCurrentDate] = useState('');
   const [lastConnection, setLastConnection] = useState('');
   const [weekDays, setWeekDays] = useState<string[]>([]);
-  const [dates, setDates] = useState<number[]>([]); // Para armazenar as datas dos dias da semana
+  const [dates, setDates] = useState<number[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar a visibilidade do modal
 
   useEffect(() => {
     const date = new Date();
@@ -26,26 +28,31 @@ export default function PontoScreen() {
     setCurrentDate(dateString);
     setLastConnection(`${date.toLocaleDateString('pt-BR')} ${timeString}`);
 
-    // Criar uma lista dos dias da semana
     const days = Array.from({ length: 7 }, (_, i) => {
       const day = new Date(date);
-      day.setDate(date.getDate() + (i - date.getDay())); // Ajusta o dia para a semana
-      return day.toLocaleDateString('pt-BR', { weekday: 'short' }); // Abreviação dos dias
+      day.setDate(date.getDate() + (i - date.getDay()));
+      return day.toLocaleDateString('pt-BR', { weekday: 'short' });
     });
     setWeekDays(days);
 
-    // Criar uma lista das datas
     const weekDates = Array.from({ length: 7 }, (_, i) => {
       const day = new Date(date);
-      day.setDate(date.getDate() + (i - date.getDay())); // Ajusta o dia para a semana
-      return day.getDate(); // Retorna apenas o dia do mês
+      day.setDate(date.getDate() + (i - date.getDay()));
+      return day.getDate();
     });
     setDates(weekDates);
   }, []);
 
   const handleRecord = (type: 'entrada' | 'saida') => {
-    // Aqui você pode adicionar a lógica para registrar a entrada/saída no banco de dados
     alert(`Registrar ${type}`);
+  };
+
+  const openProfileModal = () => {
+    setIsModalVisible(true); // Abrir o modal
+  };
+
+  const closeProfileModal = () => {
+    setIsModalVisible(false); // Fechar o modal
   };
 
   return (
@@ -56,7 +63,7 @@ export default function PontoScreen() {
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Ionicons name="leaf" size={40} color="white" />
-        <TouchableOpacity style={styles.profileButton}>
+        <TouchableOpacity style={styles.profileButton} onPress={openProfileModal}>
           <Ionicons name="person-circle" size={24} color="white" />
         </TouchableOpacity>
       </View>
@@ -81,11 +88,11 @@ export default function PontoScreen() {
       </View>
       <View style={styles.weekContainer}>
         {weekDays.map((day, index) => (
-          <Text 
-            key={index} 
+          <Text
+            key={index}
             style={[
-              styles.weekDayText, 
-              dates[index] === new Date().getDate() && styles.currentDay // Aplica estilo se for o dia atual
+              styles.weekDayText,
+              dates[index] === new Date().getDate() && styles.currentDay,
             ]}
           >
             {day}
@@ -116,6 +123,25 @@ export default function PontoScreen() {
           <Text style={styles.recordTime}>15:30</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Modal de Perfil */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={closeProfileModal} // Fecha o modal ao clicar fora no Android
+      >
+        <View style={modalStyles.modalContainer}>
+          <View style={modalStyles.modalContent}>
+            <Text style={modalStyles.modalTitle}>Perfil do Usuário</Text>
+            <Text style={modalStyles.modalText}>Nome: João Silva</Text>
+            <Text style={modalStyles.modalText}>Cargo: Desenvolvedor</Text>
+            <TouchableOpacity style={modalStyles.closeButton} onPress={closeProfileModal}>
+              <Text style={modalStyles.closeButtonText}>Voltar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

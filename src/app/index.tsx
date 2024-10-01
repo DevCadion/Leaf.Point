@@ -1,8 +1,8 @@
 import React from "react";
 
 import { View, Text, StyleSheet } from "react-native";
-import LoginScreen from "../components/pages/Header/fist";
-import PontoScreen from "../components/pages/ponto/registro"
+import LoginScreen from "../components/view/Header/fist";
+import PontoScreen from "../components/view/ponto/registro"
 //import WelcSome from "../routes/view/index"
 
 

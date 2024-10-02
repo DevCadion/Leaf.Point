@@ -28,7 +28,7 @@ export const styles= StyleSheet.create({
         width: 189,
         height: 157,
         position: 'absolute',
-        top: 0,
+        top: 15,
         alignSelf: 'center',
         
     },
@@ -38,46 +38,53 @@ export const styles= StyleSheet.create({
         flex:1,
         justifyContent: 'center',
         alignItems: 'center',
+        //backgroundColor: 'blue',
+        marginBottom: 0
         
+    },   
+
+    containerForm:{
+        flex:1,
+        marginTop: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        
+        
+    },
+
+    containerButton:{
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        height: 115
+    },   
+
+    button:{
+        backgroundColor: '#59A79B',
+        padding: 9,
+        borderRadius: 8,
+        width: 209,
+        height: 40,
+        alignItems: 'center',
+    },
+
+    buttonText:{
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight:'bold'
+        
+    },
+
+    containerBaixo:{
+        flex:1,
+        justifyContent: 'center',
+        alignItems: 'center',
         
     },
 
     imagem3:{
         width: 390,
-        height: 195,
-        position: 'absolute',
-        bottom: 0,
-        alignSelf: 'center',
+        height: 200,
+        top: 0       
         
-    },
-
-    containerForm:{
-        flex:1,
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
-        paddingStart: '5%',
-        paddingEnd: '5%',
-    },
-
-    containerBaixo:{
-        flex:1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-    },
-
-    button:{
-        position: 'absolute',
-        borderRadius: 50,
-        paddingVertical: 8,
-        width: '60%',
-        alignSelf: 'center',
-        bottom: '15%',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-
-    buttonText:{
-        fontSize: 18,
-        color: '#fff'
     }
 })

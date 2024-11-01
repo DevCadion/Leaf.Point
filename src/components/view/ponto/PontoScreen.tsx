@@ -1,16 +1,27 @@
+// PontoScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import styles from './styles';
 import { modalStyles } from './modalStyles';
+import { db } from '@/src/config/firebase'; // Importar Firestore
+import { doc, getDoc } from 'firebase/firestore'; // Importar funções necessárias do Firestore
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
+import { useNavigation } from '@react-navigation/native'
+
 
 export default function PontoScreen() {
   const [currentDate, setCurrentDate] = useState('');
   const [lastConnection, setLastConnection] = useState('');
   const [weekDays, setWeekDays] = useState<string[]>([]);
   const [dates, setDates] = useState<number[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar a visibilidade do modal
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userPosition, setUserPosition] = useState('');
+  const [userId, setUserId] = useState<string | null>(null); // Guarda o UID
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     const date = new Date();
@@ -43,23 +54,66 @@ export default function PontoScreen() {
     setDates(weekDates);
   }, []);
 
-  const handleRecord = (type: 'entrada' | 'saida') => {
-    alert(`Registrar ${type}`);
-  };
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const uid = await AsyncStorage.getItem('userUid'); // Recupera o UID do AsyncStorage
+        if (uid) {
+          setUserId(uid);
+          console.log('UID carregado:', uid);
+        } else {
+          console.log('UID não encontrado no AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar UID do AsyncStorage:', error);
+      }
+    };
 
-  const openProfileModal = () => {
-    setIsModalVisible(true); // Abrir o modal
+    fetchUserId();
+  }, []);
+
+  // Função para abrir o modal e buscar os dados do usuário
+  const openProfileModal = async () => {
+    if (!userId) {
+      Alert.alert('Erro', 'Usuário não autenticado');
+      return;
+    }
+  
+    try {
+      const userDocRef = doc(db, 'users', userId); // Usando o UID recuperado
+      const userDoc = await getDoc(userDocRef);
+  
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('Dados do usuário:', userData);
+        setUserName(userData.nome); 
+        setUserPosition(userData.cargo); 
+        setIsModalVisible(true); 
+      } else {
+        Alert.alert('Erro', 'Dados do usuário não encontrados');
+        console.log('Documento do usuário não encontrado no Firestore.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Erro ao buscar dados do usuário');
+      console.error('Erro ao acessar Firestore:', error);
+    }
   };
 
   const closeProfileModal = () => {
-    setIsModalVisible(false); // Fechar o modal
+    setIsModalVisible(false); // Fecha o modal
+  };
+
+  const handleRecord = (type: 'entrada' | 'saida') => {
+    alert(`Registrar ${type}`);
   };
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton}
+        onPress={()=> navigation.navigate('Welcome')}
+        >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Ionicons name="leaf" size={40} color="white" />
@@ -129,13 +183,13 @@ export default function PontoScreen() {
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
-        onRequestClose={closeProfileModal} // Fecha o modal ao clicar fora no Android
+        onRequestClose={closeProfileModal}
       >
         <View style={modalStyles.modalContainer}>
           <View style={modalStyles.modalContent}>
             <Text style={modalStyles.modalTitle}>Perfil do Usuário</Text>
-            <Text style={modalStyles.modalText}>Nome: João Silva</Text>
-            <Text style={modalStyles.modalText}>Cargo: Desenvolvedor</Text>
+            <Text style={modalStyles.modalText}>Nome: {userName}</Text>
+            <Text style={modalStyles.modalText}>Cargo: {userPosition}</Text>
             <TouchableOpacity style={modalStyles.closeButton} onPress={closeProfileModal}>
               <Text style={modalStyles.closeButtonText}>Voltar</Text>
             </TouchableOpacity>

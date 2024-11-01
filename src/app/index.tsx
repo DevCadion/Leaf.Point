@@ -11,10 +11,8 @@ import Routes from "../routes/index"
 
 
 export default function index() {
-    return (
-       
+    return (     
         <Routes/>
-
     );
   };
 

@@ -5,11 +5,13 @@ import PontoScreen  from "../components/view/ponto/PontoScreen"
 import LoginScreen from "../components/view/Header/LoginScreen"
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
+ 
 const Stack = createNativeStackNavigator();
 
 
 export default function Routes(){
     return(
+    
         <Stack.Navigator>
             <Stack.Screen
             name="Welcome"

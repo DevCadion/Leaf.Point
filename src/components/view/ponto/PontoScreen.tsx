@@ -10,6 +10,7 @@ import { doc, getDoc } from 'firebase/firestore'; // Importar funções necessá
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
 import { useNavigation } from '@react-navigation/native'
 
+import * as LocalAutentication from "expo-local-authentication"
 
 export default function PontoScreen() {
   const [currentDate, setCurrentDate] = useState('');
@@ -21,7 +22,36 @@ export default function PontoScreen() {
   const [userPosition, setUserPosition] = useState('');
   const [userId, setUserId] = useState<string | null>(null); // Guarda o UID
 
+  //navegação
   const navigation = useNavigation();
+
+  //autenticação face id ou digital
+
+  const [isAutenticated, setIsAutenticated] = useState(false);
+
+  async function verificaviabilidade(){
+    const compativel = await LocalAutentication.hasHardwareAsync();
+    //console.log(compativel)
+    const types = await LocalAutentication.supportedAuthenticationTypesAsync();
+    console.log(types.map(type => LocalAutentication.AuthenticationType[type]))
+  }
+
+  async function handleAutentication(){
+    const isBiometriaon = await LocalAutentication.isEnrolledAsync();
+
+    if(!isBiometriaon){
+      return Alert.alert('Falha ao Registrar', "Nenhuma biometria encontrada no dispositivo, favor, inserir biometria em suas configurações")
+    }
+    const auth = await LocalAutentication.authenticateAsync({
+      promptMessage: "Registro inserido com sucesso",
+      fallbackLabel: "Biometria não encontrada"
+    });
+  }
+
+  useEffect(()=>{
+    verificaviabilidade();
+  }, [])
+// fim da aute
 
   useEffect(() => {
     const date = new Date();
@@ -103,9 +133,7 @@ export default function PontoScreen() {
     setIsModalVisible(false); // Fecha o modal
   };
 
-  const handleRecord = (type: 'entrada' | 'saida') => {
-    alert(`Registrar ${type}`);
-  };
+ 
 
   return (
     <View style={styles.container}>
@@ -156,22 +184,22 @@ export default function PontoScreen() {
 
       {/* Registros de Ponto */}
       <ScrollView style={styles.recordsContainer}>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('entrada')}>
+        <TouchableOpacity style={styles.recordItem} onPress={() => handleAutentication()}>
           <FontAwesome name="sign-in" size={24} color="black" />
           <Text style={styles.recordText}>1ª Entrada</Text>
           <Text style={styles.recordTime}>06:00</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('saida')}>
+        <TouchableOpacity style={styles.recordItem} onPress={() => handleAutentication()}>
           <FontAwesome name="sign-out" size={24} color="black" />
           <Text style={styles.recordText}>1ª Saída</Text>
           <Text style={styles.recordTime}>10:00</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('entrada')}>
+        <TouchableOpacity style={styles.recordItem} onPress={() => handleAutentication()}>
           <FontAwesome name="sign-in" size={24} color="black" />
           <Text style={styles.recordText}>2ª Entrada</Text>
           <Text style={styles.recordTime}>11:30</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('saida')}>
+        <TouchableOpacity style={styles.recordItem} onPress={() => handleAutentication()}>
           <FontAwesome name="sign-out" size={24} color="black" />
           <Text style={styles.recordText}>2ª Saída</Text>
           <Text style={styles.recordTime}>15:30</Text>

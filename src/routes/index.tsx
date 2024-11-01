@@ -6,8 +6,15 @@ import LoginScreen from "../components/view/Header/LoginScreen"
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
  
-const Stack = createNativeStackNavigator();
+//const Stack = createNativeStackNavigator();
+type RootStackParamList = {
+    Welcome: undefined; // Sem parâmetros
+    Login: undefined; // Sem parâmetros
+    LoginScreen: undefined; // Sem parâmetros
+    PontoScreen: undefined; // Sem parâmetros
+};
 
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Routes(){
     return(

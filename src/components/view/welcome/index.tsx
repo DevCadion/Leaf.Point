@@ -2,7 +2,7 @@
 import React from 'react'
 import { styles } from './styles';
 import { View, Text, Image, TouchableOpacity } from 'react-native'
-
+import Routes from '@/src/routes';
 import * as Animatable from 'react-native-animatable' //impote da animação
 
 import { useNavigation } from '@react-navigation/native'

@@ -6,6 +6,7 @@ import { auth } from '@/src/config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage
 import { styles } from './styles';
 import { useNavigation } from '@react-navigation/native';
+
 import { FirebaseError } from 'firebase/app';
 
 import { StackTypes } from '@/src/routes'; //importação da stack de rotas

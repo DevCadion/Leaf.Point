@@ -1,11 +1,13 @@
+import styles from './styles';
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import styles from './styles';
 import { db } from '@/src/config/firebase'; 
-import { doc, collection, getDoc, updateDoc, setDoc } from 'firebase/firestore'; 
+import { doc, collection, getDoc, setDoc } from 'firebase/firestore'; 
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as Location from 'expo-location';
+import { GeoPoint } from 'firebase/firestore'; // Importando GeoPoint
 
 interface WorkSchedule {
   startTime1: string | null;
@@ -26,8 +28,12 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
     endTime2: null,
   });
   const [userId, setUserId] = useState<string | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [hasPermission, setHasPermission] = useState(false);
+  const [targetLocation, setTargetLocation] = useState<GeoPoint | null>(null); // Alterado para GeoPoint
+  const targetRadius = 100; // Cobertura de 100 metros
 
-  // Efetua o carregamento do horário de trabalho quando o componente é montado
+  // Carregar os horários do usuário e a localização de destino (GeoPoint)
   useEffect(() => {
     const fetchWorkSchedule = async () => {
       try {
@@ -43,13 +49,27 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
           } else {
             console.log('Nenhum horário encontrado para o dia.');
             const defaultSchedule: WorkSchedule = {
-              startTime1: null,
-              endTime1: null,
-              startTime2: null,
-              endTime2: null,
+              startTime1: '08:30',
+              endTime1: '12:00',
+              startTime2: '13:30',
+              endTime2: '17:30',
             };
             await setDoc(scheduleRef, defaultSchedule);
             setWorkSchedule(defaultSchedule);
+          }
+
+          // Buscar a localização de destino (GeoPoint) do banco de dados
+          const userRef = doc(db, 'users', uid);
+          const userDoc = await getDoc(userRef);
+
+          if (userDoc.exists()) {
+            const geoPoint = userDoc.data()?.lat as GeoPoint; // Assume que 'lat' é o GeoPoint
+            if (geoPoint) {
+              setTargetLocation(geoPoint);
+              console.log('Localização de destino do banco de dados:', geoPoint);
+            } else {
+              console.error('GeoPoint não encontrado no banco de dados.');
+            }
           }
         }
       } catch (error) {
@@ -58,6 +78,23 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
     };
 
     fetchWorkSchedule();
+  }, []);
+
+  // Solicita permissão de localização ao carregar o componente
+  useEffect(() => {
+    const requestLocationPermission = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        setHasPermission(true);
+        const currentLocation = await Location.getCurrentPositionAsync({});
+        console.log('Localização atual:', currentLocation);
+        setLocation(currentLocation);
+      } else {
+        Alert.alert('Erro', 'Permissão de localização não concedida.');
+      }
+    };
+
+    requestLocationPermission();
   }, []);
 
   // Função para autenticação biométrica
@@ -82,9 +119,39 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
     }
   };
 
-  // Função de registro de horários
+  // Função para calcular a distância entre dois pontos geográficos (usando a fórmula Haversine)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const toRad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371; // Raio da Terra em km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distância em km
+    return distance * 1000; // Converter para metros
+  };
+
+  // Função de registro de horários com verificação de localização
   const handleUpdateTime = async (field: keyof WorkSchedule) => {
-    if (!userId) return;
+    if (!userId || !location || !targetLocation) return;
+
+    // Verificar se a localização está dentro da área
+    const distance = calculateDistance(
+      location.coords.latitude,
+      location.coords.longitude,
+      targetLocation.latitude,
+      targetLocation.longitude
+    );
+
+    console.log(`Distância: ${distance} metros`); // Log da distância calculada
+
+    if (distance > targetRadius) {
+      Alert.alert('Erro', 'Você precisa estar dentro da área para registrar o horário.');
+      return;
+    }
 
     // Realizar a autenticação biométrica
     const isAuthenticated = await handleBiometricAuthentication();

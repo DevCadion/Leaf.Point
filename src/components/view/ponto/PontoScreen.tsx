@@ -7,7 +7,6 @@ import { modalStyles } from './modalStyles';
 import { db } from '@/src/config/firebase'; // Importar Firestore
 import { doc, getDoc, setDoc, collection } from 'firebase/firestore'; // Importar funções necessárias do Firestore
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
-
 import { useNavigation } from '@react-navigation/native'
 
 import { StackTypes } from '@/src/routes'; //importação da stack de rotas
@@ -135,47 +134,6 @@ export default function PontoScreen() {
   const closeProfileModal = () => {
     setIsModalVisible(false); // Fecha o modal
   };
-// Local provisório para função de criar horários para usuário.
-  async function createUserWorkSchedule() {
-    try {
-      const uid = await AsyncStorage.getItem('userUid'); // Recupera o UID do AsyncStorage
-      if (!uid) {
-        console.log('Usuário não autenticado');
-        return;
-      }
-  
-      // Dados de exemplo (esses valores podem ser dinâmicos)
-      const scheduleData = {
-        startTime1: '08:30',
-        endTime1: '12:00',
-        startTime2: '13:30',
-        endTime2: '17:30',
-      };
-  
-      // Referência ao documento do usuário
-      const userRef = doc(db, 'users', uid);
-      
-      // Referência à subcoleção workSchedule do usuário
-      const workScheduleRef = collection(userRef, 'workSchedule');
-  
-      // Criação de um documento para "hoje" ou com a data atual
-      const today = new Date().toLocaleDateString('pt-BR');
-      const scheduleDocRef = doc(workScheduleRef, today);
-  
-      // Definir dados no Firestore
-      await setDoc(scheduleDocRef, scheduleData);
-      console.log('Horários de trabalho registrados com sucesso!');
-    } catch (error) {
-      console.error('Erro ao criar horário de trabalho:', error);
-    }
-  }
-
-  useEffect(() => {
-    const createScheduleForNewUser = async () => {
-      await createUserWorkSchedule(); // Chama a função para criar os horários de trabalho
-    };
-    createScheduleForNewUser();
-  }, []);
 
 
   return (
@@ -183,7 +141,7 @@ export default function PontoScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}
-        onPress={()=> navigation.navigate('WelcSome')}
+        onPress={()=> {navigation.navigate('WelcSome')}}
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>

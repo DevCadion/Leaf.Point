@@ -8,10 +8,12 @@ import * as Animatable from 'react-native-animatable' //impote da animação
 import { useNavigation } from '@react-navigation/native'
 //import { styles } from '../Header/styles';
 
+import { StackTypes } from '@/src/routes';
+
 
 export default function WelcSome() {
 
-const navigation = useNavigation();
+const navigation = useNavigation<StackTypes>();
 
 return (
     <View style={styles.container}>
@@ -42,7 +44,7 @@ return (
             <View style={styles.containerButton}>
 
                 <TouchableOpacity style={styles.button} 
-                onPress={() => navigation.navigate('LoginScreen')}>
+                onPress={() => {navigation.navigate('LoginScreen')}}>
                     <Text style={styles.buttonText}>Entrar</Text>
                 </TouchableOpacity>
                 

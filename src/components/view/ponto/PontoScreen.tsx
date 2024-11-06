@@ -10,6 +10,8 @@ import { doc, getDoc } from 'firebase/firestore'; // Importar funções necessá
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
 import { useNavigation } from '@react-navigation/native'
 
+import { StackTypes } from '@/src/routes'; //importação da stack de rotas
+
 
 export default function PontoScreen() {
   const [currentDate, setCurrentDate] = useState('');
@@ -21,7 +23,7 @@ export default function PontoScreen() {
   const [userPosition, setUserPosition] = useState('');
   const [userId, setUserId] = useState<string | null>(null); // Guarda o UID
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackTypes>();
 
   useEffect(() => {
     const date = new Date();
@@ -112,7 +114,7 @@ export default function PontoScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}
-        onPress={()=> navigation.navigate('Welcome')}
+        onPress={()=> {navigation.navigate('WelcSome')}}
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>

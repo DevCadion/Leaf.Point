@@ -8,6 +8,8 @@ import { db } from '@/src/config/firebase'; // Importar Firestore
 import { doc, getDoc, setDoc, collection } from 'firebase/firestore'; // Importar funções necessárias do Firestore
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
 import { useNavigation } from '@react-navigation/native'
+
+import { StackTypes } from '@/src/routes'; //importação da stack de rotas
 import ScheduleTable from './ScheduleTable';
 
 import * as LocalAutentication from "expo-local-authentication"
@@ -180,7 +182,7 @@ export default function PontoScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}
-        onPress={()=> navigation.navigate('Welcome')}
+        onPress={()=> {navigation.navigate('WelcSome')}}
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>

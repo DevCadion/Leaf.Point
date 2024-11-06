@@ -9,8 +9,10 @@ import { useNavigation } from '@react-navigation/native';
 
 import { FirebaseError } from 'firebase/app';
 
+import { StackTypes } from '@/src/routes'; //importação da stack de rotas
+
 export default function LoginScreen() { 
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackTypes>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   

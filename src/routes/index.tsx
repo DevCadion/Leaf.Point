@@ -3,18 +3,22 @@ import WelcSome from "../components/view/welcome/index"
 import Login from "../components/view/logins/login";
 import PontoScreen  from "../components/view/ponto/PontoScreen"
 import LoginScreen from "../components/view/Header/LoginScreen"
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createStackNavigator} from '@react-navigation/stack';
+//importar Navigation prop
+import { NativeStackNavigationProp } from 'react-native-screens/lib/typescript/native-stack/types';
+
 
  
-//const Stack = createNativeStackNavigator();
-type RootStackParamList = {
-    Welcome: undefined; // Sem parâmetros
-    Login: undefined; // Sem parâmetros
-    LoginScreen: undefined; // Sem parâmetros
-    PontoScreen: undefined; // Sem parâmetros
-};
+const Stack = createStackNavigator();
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+type StackNavigator = { //usei para poder passar como obj para ir para outra pág
+    WelcSome: undefined;
+    Login: undefined;
+    LoginScreen: undefined;
+    PontoScreen: undefined;
+} 
+
+export type StackTypes =  NativeStackNavigationProp<StackNavigator>; //para ativar a stack 
 
 export default function Routes(){
     return(

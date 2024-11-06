@@ -5,16 +5,29 @@ import styles from './styles';
 import { db } from '@/src/config/firebase'; 
 import { doc, collection, getDoc, updateDoc, setDoc } from 'firebase/firestore'; 
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
-import * as LocalAuthentication from 'expo-local-authentication'; // Importa LocalAuthentication
+import * as LocalAuthentication from 'expo-local-authentication';
+
+interface WorkSchedule {
+  startTime1: string | null;
+  endTime1: string | null;
+  startTime2: string | null;
+  endTime2: string | null;
+}
 
 interface ScheduleTableProps {
   onAuthenticate: () => void;
 }
 
 const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
-  const [workSchedule, setWorkSchedule] = useState<any>({}); 
+  const [workSchedule, setWorkSchedule] = useState<WorkSchedule>({
+    startTime1: null,
+    endTime1: null,
+    startTime2: null,
+    endTime2: null,
+  });
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Efetua o carregamento do horário de trabalho quando o componente é montado
   useEffect(() => {
     const fetchWorkSchedule = async () => {
       try {
@@ -22,26 +35,21 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
         setUserId(uid);
 
         if (uid) {
-          const scheduleRef = doc(collection(db, 'users', uid, 'workSchedule'), 'today'); 
+          const scheduleRef = doc(collection(db, 'users', uid, 'workSchedule'), 'today');
           const scheduleDoc = await getDoc(scheduleRef);
 
           if (scheduleDoc.exists()) {
-            setWorkSchedule(scheduleDoc.data());
+            setWorkSchedule(scheduleDoc.data() as WorkSchedule);
           } else {
             console.log('Nenhum horário encontrado para o dia.');
-            // Se não encontrar, cria o documento com horários padrão
-            await setDoc(scheduleRef, {
-                tartTime1: '08:30',
-                endTime1: '12:00',
-                startTime2: '13:30',
-                endTime2: '17:30',
-            });
-            setWorkSchedule({
-                tartTime1: '08:30',
-                endTime1: '12:00',
-                startTime2: '13:30',
-                endTime2: '17:30',
-            });
+            const defaultSchedule: WorkSchedule = {
+              startTime1: null,
+              endTime1: null,
+              startTime2: null,
+              endTime2: null,
+            };
+            await setDoc(scheduleRef, defaultSchedule);
+            setWorkSchedule(defaultSchedule);
           }
         }
       } catch (error) {
@@ -52,12 +60,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
     fetchWorkSchedule();
   }, []);
 
-  const handleBiometricAuthentication = async () => {
+  // Função para autenticação biométrica
+  const handleBiometricAuthentication = async (): Promise<boolean> => {
     const isBiometricEnrolled = await LocalAuthentication.isEnrolledAsync();
     
     if (!isBiometricEnrolled) {
       Alert.alert('Erro', 'Nenhuma biometria cadastrada no dispositivo.');
-      return;
+      return false;
     }
 
     const authResult = await LocalAuthentication.authenticateAsync({
@@ -73,26 +82,35 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
     }
   };
 
-  const handleUpdateTime = async (field: string) => {
+  // Função de registro de horários
+  const handleUpdateTime = async (field: keyof WorkSchedule) => {
     if (!userId) return;
 
-    // Primeiro, autentique o usuário com biometria
+    // Realizar a autenticação biométrica
     const isAuthenticated = await handleBiometricAuthentication();
-    
-    if (!isAuthenticated) {
-      return; // Não prossegue se a autenticação falhar
-    }
+    if (!isAuthenticated) return;
 
-    // Se a autenticação for bem-sucedida, registre a hora
+    // Obter a hora atual
     const currentTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    const scheduleRef = doc(collection(db, 'users', userId, 'workSchedule'), 'today');
+    
+    // Definir o documento com a data do dia (ano-mês-dia) como ID
+    const currentDate = new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-'); // Formato: YYYY-MM-DD
+
+    // Referência ao documento do horário de trabalho para o dia específico
+    const scheduleRef = doc(collection(db, 'users', userId, 'workSchedule'), currentDate); 
+
+    // Preparar os dados a serem salvos para o campo correspondente
+    const newScheduleData = { 
+      [field]: currentTime 
+    };
 
     try {
-      await updateDoc(scheduleRef, { [field]: currentTime });
-      setWorkSchedule((prev: any) => ({ ...prev, [field]: currentTime }));
-      onAuthenticate(); // Chama a função de callback para autenticação
+      // Salvar ou criar o documento com a data do dia e os horários registrados
+      await setDoc(scheduleRef, newScheduleData, { merge: true }); // O merge: true evita sobrescrever campos existentes
+      setWorkSchedule((prev) => ({ ...prev, [field]: currentTime }));
+      if (onAuthenticate) onAuthenticate();  // Chama a função para autenticação
     } catch (error) {
-      console.error('Erro ao atualizar horário:', error);
+      console.error('Erro ao registrar horário:', error);
     }
   };
 
@@ -101,25 +119,25 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
       <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('startTime1')}>
         <FontAwesome name="sign-in" size={24} color="black" />
         <Text style={styles.recordText}>1ª Entrada</Text>
-        <Text style={styles.recordTime}>{workSchedule.startTime1 || '06:00'}</Text>
+        <Text style={styles.recordTime}>{workSchedule.startTime1 || 'Horário não registrado'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('endTime1')}>
         <FontAwesome name="sign-out" size={24} color="black" />
         <Text style={styles.recordText}>1ª Saída</Text>
-        <Text style={styles.recordTime}>{workSchedule.endTime1 || '10:00'}</Text>
+        <Text style={styles.recordTime}>{workSchedule.endTime1 || 'Horário não registrado'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('startTime2')}>
         <FontAwesome name="sign-in" size={24} color="black" />
         <Text style={styles.recordText}>2ª Entrada</Text>
-        <Text style={styles.recordTime}>{workSchedule.startTime2 || '11:30'}</Text>
+        <Text style={styles.recordTime}>{workSchedule.startTime2 || 'Horário não registrado'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('endTime2')}>
         <FontAwesome name="sign-out" size={24} color="black" />
         <Text style={styles.recordText}>2ª Saída</Text>
-        <Text style={styles.recordTime}>{workSchedule.endTime2 || '15:30'}</Text>
+        <Text style={styles.recordTime}>{workSchedule.endTime2 || 'Horário não registrado'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

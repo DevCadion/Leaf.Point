@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, Alert, Image} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 //import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import styles from './styles';
@@ -145,7 +145,12 @@ export default function PontoScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Ionicons name="leaf" size={40} color="white" />
+        {/* Imagem logo branca */}
+        <Image 
+          source={require('@/src/assets/images/logo-branca.png')}
+          style={styles.logo}
+        />
+      {/*<Ionicons name="leaf" size={40} color="white" />  */}
         <TouchableOpacity style={styles.profileButton} onPress={openProfileModal}>
           <Ionicons name="person-circle" size={24} color="white" />
         </TouchableOpacity>

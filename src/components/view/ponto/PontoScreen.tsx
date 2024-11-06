@@ -1,15 +1,16 @@
-// PontoScreen.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+//import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import styles from './styles';
 import { modalStyles } from './modalStyles';
 import { db } from '@/src/config/firebase'; // Importar Firestore
-import { doc, getDoc } from 'firebase/firestore'; // Importar funções necessárias do Firestore
+import { doc, getDoc, setDoc, collection } from 'firebase/firestore'; // Importar funções necessárias do Firestore
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
 import { useNavigation } from '@react-navigation/native'
+import ScheduleTable from './ScheduleTable';
 
+import * as LocalAutentication from "expo-local-authentication"
 
 export default function PontoScreen() {
   const [currentDate, setCurrentDate] = useState('');
@@ -21,7 +22,36 @@ export default function PontoScreen() {
   const [userPosition, setUserPosition] = useState('');
   const [userId, setUserId] = useState<string | null>(null); // Guarda o UID
 
+  //navegação
   const navigation = useNavigation();
+
+  //autenticação face id ou digital
+
+  const [isAutenticated, setIsAutenticated] = useState(false);
+
+  async function verificaviabilidade(){
+    const compativel = await LocalAutentication.hasHardwareAsync();
+    //console.log(compativel)
+    const types = await LocalAutentication.supportedAuthenticationTypesAsync();
+    console.log(types.map(type => LocalAutentication.AuthenticationType[type]))
+  }
+
+  async function handleAutentication(){
+    const isBiometriaon = await LocalAutentication.isEnrolledAsync();
+
+    if(!isBiometriaon){
+      return Alert.alert('Falha ao Registrar', "Nenhuma biometria encontrada no dispositivo, favor, inserir biometria em suas configurações")
+    }
+    const auth = await LocalAutentication.authenticateAsync({
+      promptMessage: "Registro inserido com sucesso",
+      fallbackLabel: "Biometria não encontrada"
+    });
+  }
+
+  useEffect(()=>{
+    verificaviabilidade();
+  }, [])
+// fim da aute
 
   useEffect(() => {
     const date = new Date();
@@ -102,10 +132,48 @@ export default function PontoScreen() {
   const closeProfileModal = () => {
     setIsModalVisible(false); // Fecha o modal
   };
+// Local provisório para função de criar horários para usuário.
+  async function createUserWorkSchedule() {
+    try {
+      const uid = await AsyncStorage.getItem('userUid'); // Recupera o UID do AsyncStorage
+      if (!uid) {
+        console.log('Usuário não autenticado');
+        return;
+      }
+  
+      // Dados de exemplo (esses valores podem ser dinâmicos)
+      const scheduleData = {
+        startTime1: '08:30',
+        endTime1: '12:00',
+        startTime2: '13:30',
+        endTime2: '17:30',
+      };
+  
+      // Referência ao documento do usuário
+      const userRef = doc(db, 'users', uid);
+      
+      // Referência à subcoleção workSchedule do usuário
+      const workScheduleRef = collection(userRef, 'workSchedule');
+  
+      // Criação de um documento para "hoje" ou com a data atual
+      const today = new Date().toLocaleDateString('pt-BR');
+      const scheduleDocRef = doc(workScheduleRef, today);
+  
+      // Definir dados no Firestore
+      await setDoc(scheduleDocRef, scheduleData);
+      console.log('Horários de trabalho registrados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar horário de trabalho:', error);
+    }
+  }
 
-  const handleRecord = (type: 'entrada' | 'saida') => {
-    alert(`Registrar ${type}`);
-  };
+  useEffect(() => {
+    const createScheduleForNewUser = async () => {
+      await createUserWorkSchedule(); // Chama a função para criar os horários de trabalho
+    };
+    createScheduleForNewUser();
+  }, []);
+
 
   return (
     <View style={styles.container}>
@@ -154,29 +222,8 @@ export default function PontoScreen() {
         ))}
       </View>
 
-      {/* Registros de Ponto */}
-      <ScrollView style={styles.recordsContainer}>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('entrada')}>
-          <FontAwesome name="sign-in" size={24} color="black" />
-          <Text style={styles.recordText}>1ª Entrada</Text>
-          <Text style={styles.recordTime}>06:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('saida')}>
-          <FontAwesome name="sign-out" size={24} color="black" />
-          <Text style={styles.recordText}>1ª Saída</Text>
-          <Text style={styles.recordTime}>10:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('entrada')}>
-          <FontAwesome name="sign-in" size={24} color="black" />
-          <Text style={styles.recordText}>2ª Entrada</Text>
-          <Text style={styles.recordTime}>11:30</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.recordItem} onPress={() => handleRecord('saida')}>
-          <FontAwesome name="sign-out" size={24} color="black" />
-          <Text style={styles.recordText}>2ª Saída</Text>
-          <Text style={styles.recordTime}>15:30</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      {/* Registros ScheduleTable */}
+      <ScheduleTable onAuthenticate={handleAutentication} />
 
       {/* Modal de Perfil */}
       <Modal

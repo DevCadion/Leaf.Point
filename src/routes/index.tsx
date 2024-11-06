@@ -25,7 +25,7 @@ export default function Routes(){
     
         <Stack.Navigator>
             <Stack.Screen
-            name="Welcome"
+            name="WelcSome"
             component={WelcSome}
             options={{ headerShown: false}}
             />

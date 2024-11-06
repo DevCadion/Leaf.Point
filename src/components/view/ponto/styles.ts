@@ -99,6 +99,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
   },
+  logo:{
+    
+//colocar aqui o layout
+  },
 });
 
 export default styles;

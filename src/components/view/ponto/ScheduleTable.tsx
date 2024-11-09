@@ -118,6 +118,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
       return false;
     }
   };
+  //commi
 
   // Função para calcular a distância entre dois pontos geográficos (usando a fórmula Haversine)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {

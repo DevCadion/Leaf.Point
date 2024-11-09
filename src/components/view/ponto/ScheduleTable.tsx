@@ -7,13 +7,20 @@ import { doc, collection, getDoc, setDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as Location from 'expo-location';
-import { GeoPoint } from 'firebase/firestore'; // Importando GeoPoint
+import { GeoPoint } from 'firebase/firestore';
 
 interface WorkSchedule {
   startTime1: string | null;
   endTime1: string | null;
   startTime2: string | null;
   endTime2: string | null;
+}
+
+interface DefaultSchedule {
+  startTime1: string;
+  endTime1: string;
+  startTime2: string;
+  endTime2: string;
 }
 
 interface ScheduleTableProps {
@@ -27,35 +34,59 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
     startTime2: null,
     endTime2: null,
   });
+  const [defaultSchedule, setDefaultSchedule] = useState<DefaultSchedule | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [hasPermission, setHasPermission] = useState(false);
-  const [targetLocation, setTargetLocation] = useState<GeoPoint | null>(null); // Alterado para GeoPoint
-  const targetRadius = 100; // Cobertura de 100 metros
+  const [targetLocation, setTargetLocation] = useState<GeoPoint | null>(null); 
+  const targetRadius = 100;
 
-  // Carregar os horários do usuário e a localização de destino (GeoPoint)
+  // Carregar horários de expediente e do usuário
   useEffect(() => {
-    const fetchWorkSchedule = async () => {
+    const fetchSchedules = async () => {
       try {
         const uid = await AsyncStorage.getItem('userUid');
         setUserId(uid);
 
+        // Buscar horários padrão do expediente
+        const defaultScheduleRef = doc(db, 'expediente', 'defaultTimes');
+        const defaultScheduleDoc = await getDoc(defaultScheduleRef);
+
+        if (defaultScheduleDoc.exists()) {
+          setDefaultSchedule(defaultScheduleDoc.data() as DefaultSchedule);
+          console.log('Horários padrão carregados:', defaultScheduleDoc.data());
+        } else {
+          console.log('Horários padrão do expediente não encontrados. Criando um novo documento...');
+          const defaultTimes = {
+            startTime1: '08:30',
+            endTime1: '12:00',
+            startTime2: '14:00',
+            endTime2: '18:00',
+          };
+          await setDoc(defaultScheduleRef, defaultTimes);
+          setDefaultSchedule(defaultTimes);
+          console.log('Documento de horários padrão criado:', defaultTimes);
+        }
+
         if (uid) {
-          const scheduleRef = doc(collection(db, 'users', uid, 'workSchedule'), 'today');
+          const currentDate = new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-');
+          const scheduleRef = doc(collection(db, 'users', uid, 'workSchedule'), currentDate);
           const scheduleDoc = await getDoc(scheduleRef);
 
           if (scheduleDoc.exists()) {
             setWorkSchedule(scheduleDoc.data() as WorkSchedule);
+            console.log('Horário do usuário para hoje carregado:', scheduleDoc.data());
           } else {
-            console.log('Nenhum horário encontrado para o dia.');
-            const defaultSchedule: WorkSchedule = {
-              startTime1: '08:30',
-              endTime1: '12:00',
-              startTime2: '13:30',
-              endTime2: '17:30',
+            console.log('Nenhum horário do usuário encontrado para o dia.');
+            const emptySchedule: WorkSchedule = {
+              startTime1: null,
+              endTime1: null,
+              startTime2: null,
+              endTime2: null,
             };
-            await setDoc(scheduleRef, defaultSchedule);
-            setWorkSchedule(defaultSchedule);
+            await setDoc(scheduleRef, emptySchedule);
+            setWorkSchedule(emptySchedule);
+            console.log('Documento de horário do usuário para hoje criado:', emptySchedule);
           }
 
           // Buscar a localização de destino (GeoPoint) do banco de dados
@@ -63,10 +94,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
           const userDoc = await getDoc(userRef);
 
           if (userDoc.exists()) {
-            const geoPoint = userDoc.data()?.lat as GeoPoint; // Assume que 'lat' é o GeoPoint
+            const geoPoint = userDoc.data()?.lat as GeoPoint; 
             if (geoPoint) {
               setTargetLocation(geoPoint);
-              console.log('Localização de destino do banco de dados:', geoPoint);
+              console.log('Localização de destino carregada do banco de dados:', geoPoint);
             } else {
               console.error('GeoPoint não encontrado no banco de dados.');
             }
@@ -77,7 +108,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
       }
     };
 
-    fetchWorkSchedule();
+    fetchSchedules();
   }, []);
 
   // Solicita permissão de localização ao carregar o componente
@@ -87,7 +118,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
       if (status === 'granted') {
         setHasPermission(true);
         const currentLocation = await Location.getCurrentPositionAsync({});
-        console.log('Localização atual:', currentLocation);
         setLocation(currentLocation);
       } else {
         Alert.alert('Erro', 'Permissão de localização não concedida.');
@@ -111,15 +141,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
       fallbackLabel: 'Não consigo usar a biometria',
     });
 
-    if (authResult.success) {
-      return true;
-    } else {
-      Alert.alert('Erro', 'Autenticação biométrica falhou ou foi cancelada.');
-      return false;
-    }
+    return authResult.success;
   };
 
-  // Função para calcular a distância entre dois pontos geográficos (usando a fórmula Haversine)
+  // Função para calcular a distância entre dois pontos geográficos
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const toRad = (x: number) => (x * Math.PI) / 180;
     const R = 6371; // Raio da Terra em km
@@ -136,9 +161,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
 
   // Função de registro de horários com verificação de localização
   const handleUpdateTime = async (field: keyof WorkSchedule) => {
-    if (!userId || !location || !targetLocation) return;
+    if (!userId || !location || !targetLocation || workSchedule[field]) return;
 
-    // Verificar se a localização está dentro da área
     const distance = calculateDistance(
       location.coords.latitude,
       location.coords.longitude,
@@ -146,36 +170,28 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
       targetLocation.longitude
     );
 
-    console.log(`Distância: ${distance} metros`); // Log da distância calculada
-
     if (distance > targetRadius) {
       Alert.alert('Erro', 'Você precisa estar dentro da área para registrar o horário.');
       return;
     }
 
-    // Realizar a autenticação biométrica
     const isAuthenticated = await handleBiometricAuthentication();
     if (!isAuthenticated) return;
 
-    // Obter a hora atual
     const currentTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
-    // Definir o documento com a data do dia (ano-mês-dia) como ID
-    const currentDate = new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-'); // Formato: YYYY-MM-DD
+    const currentDate = new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-');
 
-    // Referência ao documento do horário de trabalho para o dia específico
     const scheduleRef = doc(collection(db, 'users', userId, 'workSchedule'), currentDate); 
 
-    // Preparar os dados a serem salvos para o campo correspondente
     const newScheduleData = { 
       [field]: currentTime 
     };
 
     try {
-      // Salvar ou criar o documento com a data do dia e os horários registrados
-      await setDoc(scheduleRef, newScheduleData, { merge: true }); // O merge: true evita sobrescrever campos existentes
+      await setDoc(scheduleRef, newScheduleData, { merge: true });
       setWorkSchedule((prev) => ({ ...prev, [field]: currentTime }));
-      if (onAuthenticate) onAuthenticate();  // Chama a função para autenticação
+      console.log(`Horário registrado para o campo ${field}:`, currentTime);
+      if (onAuthenticate) onAuthenticate();
     } catch (error) {
       console.error('Erro ao registrar horário:', error);
     }
@@ -183,28 +199,52 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
 
   return (
     <ScrollView style={styles.recordsContainer}>
-      <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('startTime1')}>
+      <TouchableOpacity 
+        style={styles.recordItem} 
+        onPress={() => handleUpdateTime('startTime1')}
+        disabled={!!workSchedule.startTime1}
+      >
         <FontAwesome name="sign-in" size={24} color="black" />
         <Text style={styles.recordText}>1ª Entrada</Text>
-        <Text style={styles.recordTime}>{workSchedule.startTime1 || 'Horário não registrado'}</Text>
+        <Text style={styles.recordTime}>
+          {workSchedule.startTime1 || defaultSchedule?.startTime1 || 'Horário não registrado'}
+        </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('endTime1')}>
+      <TouchableOpacity 
+        style={styles.recordItem} 
+        onPress={() => handleUpdateTime('endTime1')}
+        disabled={!!workSchedule.endTime1}
+      >
         <FontAwesome name="sign-out" size={24} color="black" />
         <Text style={styles.recordText}>1ª Saída</Text>
-        <Text style={styles.recordTime}>{workSchedule.endTime1 || 'Horário não registrado'}</Text>
+        <Text style={styles.recordTime}>
+          {workSchedule.endTime1 || defaultSchedule?.endTime1 || 'Horário não registrado'}
+        </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('startTime2')}>
+      <TouchableOpacity 
+        style={styles.recordItem} 
+        onPress={() => handleUpdateTime('startTime2')}
+        disabled={!!workSchedule.startTime2}
+      >
         <FontAwesome name="sign-in" size={24} color="black" />
         <Text style={styles.recordText}>2ª Entrada</Text>
-        <Text style={styles.recordTime}>{workSchedule.startTime2 || 'Horário não registrado'}</Text>
+        <Text style={styles.recordTime}>
+          {workSchedule.startTime2 || defaultSchedule?.startTime2 || 'Horário não registrado'}
+        </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.recordItem} onPress={() => handleUpdateTime('endTime2')}>
+      <TouchableOpacity 
+        style={styles.recordItem} 
+        onPress={() => handleUpdateTime('endTime2')}
+        disabled={!!workSchedule.endTime2}
+      >
         <FontAwesome name="sign-out" size={24} color="black" />
         <Text style={styles.recordText}>2ª Saída</Text>
-        <Text style={styles.recordTime}>{workSchedule.endTime2 || 'Horário não registrado'}</Text>
+        <Text style={styles.recordTime}>
+          {workSchedule.endTime2 || defaultSchedule?.endTime2 || 'Horário não registrado'}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );

@@ -143,6 +143,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ onAuthenticate }) => {
 
     return authResult.success;
   };
+  //commi
 
   // Função para calcular a distância entre dois pontos geográficos
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {

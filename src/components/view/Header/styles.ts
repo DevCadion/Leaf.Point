@@ -30,7 +30,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#00A86B',
+    backgroundColor: '#00734F',
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: 'center',
@@ -48,6 +48,8 @@ export const styles = StyleSheet.create({
   },
   link: {
     color: '#0000FF',
+    left: 5,
+    top: 4,
     fontWeight: 'bold',
   },
   logoContainer: {

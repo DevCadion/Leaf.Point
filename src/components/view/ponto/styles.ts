@@ -100,8 +100,9 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   logo:{
-    
-//colocar aqui o layout
+    width: 50,
+    height: 50,
+    alignItems: 'center'
   },
 });
 

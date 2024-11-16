@@ -59,7 +59,7 @@ export const styles= StyleSheet.create({
     },   
 
     button:{
-        backgroundColor: '#59A79B',
+        backgroundColor: '#00734F',
         padding: 9,
         borderRadius: 8,
         width: 209,
